@@ -25,10 +25,6 @@ v
 Fblog-api/src/main/java/com/example/blogapi/vo/params/CommentParam.java,a\f\af2cfd7c06a49256e73c04a2bdeab4136abce951
 u
 Eblog-api/src/main/java/com/example/blogapi/utils/UserThreadLocal.java,a\c\ac53b9e2868d5227f4a65f245e65f6bda76a72f1
-
-Oblog-api/src/main/java/com/example/blogapi/service/impl/CommentServiceImpl.java,6\9\69397e99fd243ffcfc02bd0988a5bd7f7fd6e67b
-p
-@blog-api/src/main/java/com/example/blogapi/dao/pojo/SysUser.java,6\7\670aa79695ad78ca0da8ff913b7efe03f61dbe02
 7
 pom.xml,4\4\442292b8a7efeabbe4cc176709b833b1792140ec
 x
@@ -47,3 +43,9 @@ t
 Dblog-api/src/main/java/com/example/blogapi/vo/params/PageParams.java,6\b\6b337892575257f22f2c0d4af5f0ad82653043a9
 |
 Lblog-api/src/main/java/com/example/blogapi/controller/ArticleController.java,1\e\1e98e6006b8c7eba907555db31a5e8ee269661b8
+p
+@blog-api/src/main/java/com/example/blogapi/vo/DocDownLoadVo.java,e\c\ec6eebf054e32edc4aae6c1bf53a55cada111530
+y
+Iblog-api/src/main/java/com/example/blogapi/dao/mapper/DocumentMapper.java,c\5\c55522f29d62f67148c55bdb7718ea9e9808c0f2
+x
+Hblog-api/src/main/java/com/example/blogapi/handler/LoginInterceptor.java,f\1\f17e11aed38a795f1e9f36ad5795aa4935e97ce1

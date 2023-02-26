@@ -1,14 +1,17 @@
 package com.example.blogapi.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.blogapi.dao.mapper.DocumentMapper;
 import com.example.blogapi.dao.pojo.Document;
 import com.example.blogapi.service.DocumentService;
+import com.example.blogapi.service.SysUserService;
 import com.example.blogapi.utils.UserThreadLocal;
 import com.example.blogapi.vo.DocDownLoadVo;
 import com.example.blogapi.vo.DocListVo;
 import com.example.blogapi.vo.Result;
+import com.example.blogapi.vo.UserVo;
 import com.example.blogapi.vo.params.DocUploadParam;
 import com.example.blogapi.vo.params.PageParams;
 import org.springframework.stereotype.Service;
@@ -20,11 +23,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
-
+import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -32,6 +32,8 @@ public class DocumentServiceImpl implements DocumentService {
     public static final  String FIFLE_PREFIX = "D:\\demo\\blog\\blog-api\\uploadfile\\";
     @Resource
     private DocumentMapper documentMapper;
+    @Resource
+    private SysUserService sysUserService;
 
     @Override
     public Result getAllDocuments(PageParams params) {
@@ -39,7 +41,18 @@ public class DocumentServiceImpl implements DocumentService {
         LambdaQueryWrapper wrapper = new LambdaQueryWrapper<>();
         Page selectPage = documentMapper.selectPage(page, wrapper);
         Integer count = documentMapper.selectCount(wrapper);
-        DocListVo docListVo = new DocListVo(selectPage.getRecords(),params.getPage(), params.getPageSize(),count);
+        DocListVo docListVo = new DocListVo(selectPage.getRecords(), params.getPage(), params.getPageSize(), count);
+        List<Long> idList = docListVo.getDocuments().stream().map(Document::getPublisherId).distinct().collect(Collectors.toList());
+        List<UserVo> userVoByIds = sysUserService.findUserVoByIds(idList);
+        docListVo.getDocuments().stream().forEach(document -> {
+            for (UserVo userVo : userVoByIds) {
+                if (userVo.getId().equals(String.valueOf(document.getPublisherId()))) {
+                    document.setPublisher(userVo.getNickname());
+                    return;
+                }
+            }
+        });
+
         return Result.success(docListVo);
     }
 

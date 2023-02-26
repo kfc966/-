@@ -14,6 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @Transactional
 public class SysUserServiceImpl implements SysUserService {
@@ -75,6 +78,18 @@ public class SysUserServiceImpl implements SysUserService {
     @Override
     public UserVo findUserVoById(Long id) {
         SysUser sysUser = sysUserMapper.selectById(id);
+        this.sysUserToUserVo(sysUser);
+        return this.sysUserToUserVo(sysUser);
+    }
+
+    @Override
+    public List<UserVo> findUserVoByIds(List<Long> ids) {
+        List<SysUser> sysUsers = sysUserMapper.selectBatchIds(ids);
+        List<UserVo> userVoList = sysUsers.stream().map(this::sysUserToUserVo).collect(Collectors.toList());
+        return userVoList;
+    }
+
+    private UserVo sysUserToUserVo(SysUser sysUser) {
         if(sysUser==null)
         {
             sysUser=new SysUser();
@@ -86,6 +101,6 @@ public class SysUserServiceImpl implements SysUserService {
         UserVo userVo=new UserVo();
         BeanUtils.copyProperties(sysUser,userVo);
         userVo.setId(String.valueOf(sysUser.getId()));
-        return userVo;
+        return  userVo;
     }
 }

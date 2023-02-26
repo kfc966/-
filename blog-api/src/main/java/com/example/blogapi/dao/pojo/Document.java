@@ -1,10 +1,15 @@
 package com.example.blogapi.dao.pojo;
 
+import com.baomidou.mybatisplus.annotation.TableField;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class Document {
     /**
      * 文档id
@@ -15,6 +20,12 @@ public class Document {
      * 发布者id
      */
     private Long publisherId;
+
+    /**
+     * 发布者名字
+     */
+    @TableField(exist = false)
+    private String publisher;
 
     /**
      * 文档名称
