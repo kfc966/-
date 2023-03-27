@@ -36,7 +36,7 @@ public class FastdfsUtils {
         // 设置文件信息
         Set<MetaData> mataData = new HashSet<>();
         SysUser sysUser = UserThreadLocal.get();
-        String account = Optional.ofNullable(sysUser).map(SysUser::getAccount).orElse("FastDfs");
+        String account = Optional.ofNullable(sysUser).map(e->String.valueOf(e.getId())).orElse("-");
         mataData.add(new MetaData("account", account));
         mataData.add(new MetaData("description", file.getOriginalFilename()));
         // 上传
@@ -68,12 +68,9 @@ public class FastdfsUtils {
      * * @param filename 下载的文件命名
      * * @return
      */
-    public byte[]  download(String path, String filename) throws IOException {
+    public byte[]  download(String path) throws IOException {
 		// 获取文件
         StorePath storePath = StorePath.parseFromUrl(path);
-        if (StringUtils.isBlank(filename)) {
-            filename = FilenameUtils.getName(storePath.getPath());
-        }
         byte[] bytes = fastFileStorageClient.downloadFile(storePath.getGroup(), storePath.getPath(), new DownloadByteArray());
         return bytes;
     }

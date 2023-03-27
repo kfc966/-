@@ -67,7 +67,7 @@ class BlogApiApplicationTests {
     @Test
     public  void TestDownload() throws IOException {
         String path = "group1/M00/00/00/CgAQAmQhQgaAIJ-EAACde9yfmf4793.png";
-        byte[] download = fastdfsUtils.download(path, "");
+        byte[] download = fastdfsUtils.download(path);
         FileOutputStream fileOutputStream = new FileOutputStream("uploadfile/kk.png");
         fileOutputStream.write(download);
         fileOutputStream.close();
