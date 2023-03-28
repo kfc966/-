@@ -2,9 +2,12 @@ package com.example.blogapi;
 
 import com.alibaba.fastjson.JSON;
 import com.example.blogapi.dao.mapper.ArticleMapper;
+import com.example.blogapi.dao.mapper.DocumentMapper;
 import com.example.blogapi.dao.mapper.SysUserMapper;
 import com.example.blogapi.dao.pojo.Article;
+import com.example.blogapi.dao.pojo.Document;
 import com.example.blogapi.dao.repository.ArticleRepository;
+import com.example.blogapi.dao.repository.DocumentRepository;
 import com.example.blogapi.service.ArticleService;
 import com.example.blogapi.service.EsArticleService;
 import com.example.blogapi.service.impl.ArticleServiceImpl;
@@ -21,18 +24,21 @@ import org.springframework.data.domain.Page;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import java.io.*;
 
 
 import java.util.List;
 
 @SpringBootTest(classes = {BlogApiApplication.class})
-@SpringBootTest
 @Slf4j
 class BlogApiApplicationTests {
 
     @Autowired
     private ArticleService articleService;
+
+    @Resource
+    private DocumentMapper documentMapper;
     @Autowired
     private SysUserMapper sysUserMapper;
 
@@ -41,7 +47,8 @@ class BlogApiApplicationTests {
 
     @Autowired
     private ArticleRepository articleRepository;
-
+    @Autowired
+    private DocumentRepository documentRepository;
 
     @Autowired
     private FastdfsUtils fastdfsUtils;
@@ -98,6 +105,15 @@ class BlogApiApplicationTests {
             article.setAuthorName(sysUserMapper.selectById(article.getAuthorId()).getNickname());
         }
         articleRepository.saveAll(articles);
+    }
+
+    @Test
+    public void saveDocToEs(){
+        List<Document> documents = documentMapper.selectList(null);
+        for (Document document : documents) {
+            document.setPublisher(sysUserMapper.selectById(document.getPublisherId()).getNickname());
+        }
+        documentRepository.saveAll(documents);
     }
 
     @Test
