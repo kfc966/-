@@ -16,4 +16,5 @@ public interface DocumentService {
     public Result deleteDocument(Long documentId);
 
 
+    Result searchDocument(PageParams params);
 }

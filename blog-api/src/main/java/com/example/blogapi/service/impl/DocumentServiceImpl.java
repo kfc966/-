@@ -16,7 +16,16 @@ import com.example.blogapi.vo.UserVo;
 import com.example.blogapi.vo.params.DocUploadParam;
 import com.example.blogapi.vo.params.PageParams;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
+import org.springframework.data.elasticsearch.core.SearchHit;
+import org.springframework.data.elasticsearch.core.SearchHits;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQuery;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -40,24 +49,27 @@ public class DocumentServiceImpl implements DocumentService {
     @Resource
     private FastdfsUtils fastdfsUtils;
 
+    @Resource
+    private ElasticsearchRestTemplate elasticsearchTemplate;
+
     @Override
     public Result getAllDocuments(PageParams params) {
         Page<Document> page = new Page<>(params.getPage(), params.getPageSize());
         LambdaQueryWrapper wrapper = new LambdaQueryWrapper<>();
         Page selectPage = documentMapper.selectPage(page, wrapper);
         Integer count = documentMapper.selectCount(wrapper);
-        DocListVo docListVo = new DocListVo(selectPage.getRecords(), params.getPage(), params.getPageSize(), count);
+        DocListVo docListVo = new DocListVo(selectPage.getRecords(), params.getPageSize(), params.getPage(), count);
         List<Long> idList = docListVo.getDocuments().stream().map(Document::getPublisherId).distinct().collect(Collectors.toList());
-        List<UserVo> userVoByIds = sysUserService.findUserVoByIds(idList);
-        docListVo.getDocuments().stream().forEach(document -> {
-            for (UserVo userVo : userVoByIds) {
-                if (userVo.getId().equals(String.valueOf(document.getPublisherId()))) {
-                    document.setPublisher(userVo.getNickname());
-                    return;
+        if(!CollectionUtils.isEmpty(idList)){
+            List<UserVo> userVoByIds = sysUserService.findUserVoByIds(idList);
+            docListVo.getDocuments().stream().forEach(document -> {
+                for (UserVo userVo : userVoByIds) {
+                    if (userVo.getId().equals(String.valueOf(document.getPublisherId()))) {
+                        document.setPublisher(userVo.getNickname());
+                        return;
+                    }
                 }
-            }
-        });
-
+            });}
         return Result.success(docListVo);
     }
 
@@ -137,5 +149,19 @@ public class DocumentServiceImpl implements DocumentService {
 //        File oldDocFile = new File(FIFLE_PREFIX + oldDoc.getDocUri());
 //        oldDocFile.delete();
         return Result.success(i);
+    }
+
+    @Override
+    public Result searchDocument(PageParams params) {
+        NativeSearchQueryBuilder queryBuilder = new NativeSearchQueryBuilder().
+                withQuery(QueryBuilders.matchQuery("all", params.getSearchKey()))
+                .withPageable(PageRequest.of(params.getPage() - 1, params.getPageSize()));
+        if(StringUtils.isBlank(params.getSearchKey())){
+            queryBuilder.withQuery(QueryBuilders.matchAllQuery());
+        }
+        SearchHits<Document> searchHits = elasticsearchTemplate.search(queryBuilder.build(), Document.class);
+        List<Document> documents = searchHits.stream().map(SearchHit::getContent).collect(Collectors.toList());
+        DocListVo docListVo = new DocListVo(documents, params.getPageSize(), params.getPage(), (int) searchHits.getTotalHits());
+        return Result.success(docListVo);
     }
 }

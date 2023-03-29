@@ -22,4 +22,6 @@ public interface ArticleService {
     Result publish(ArticleParam articleParam);
 
     Result listArchives();
+
+    Result searchArticle(PageParams params);
 }

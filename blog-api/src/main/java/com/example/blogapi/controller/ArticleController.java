@@ -1,17 +1,20 @@
 package com.example.blogapi.controller;
 
+import com.alibaba.fastjson.JSON;
 import com.example.blogapi.common.aop.LogAnnotation;
 import com.example.blogapi.common.aop.cache.Cache;
 import com.example.blogapi.service.ArticleService;
 import com.example.blogapi.vo.Result;
 import com.example.blogapi.vo.params.ArticleParam;
 import com.example.blogapi.vo.params.PageParams;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 //json数据交互
 @RestController
 @RequestMapping("articles")
+@Slf4j
 public class ArticleController {
     @Autowired
     private ArticleService articleService;
@@ -49,5 +52,12 @@ public class ArticleController {
     public Result publish(@RequestBody ArticleParam articleParam)
     {
         return  articleService.publish(articleParam);
+    }
+
+    @PostMapping("/search")
+    @ResponseBody
+    public Result searchArticle(@RequestBody PageParams params){
+        log.info("searchArticle request params:[{}] ", JSON.toJSONString(params));
+        return  articleService.searchArticle(params);
     }
 }

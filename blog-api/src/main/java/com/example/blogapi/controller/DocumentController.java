@@ -1,5 +1,6 @@
 package com.example.blogapi.controller;
 
+import com.alibaba.fastjson.JSON;
 import com.example.blogapi.dao.pojo.SysUser;
 import com.example.blogapi.service.DocumentService;
 import com.example.blogapi.utils.UserThreadLocal;
@@ -7,6 +8,7 @@ import com.example.blogapi.vo.DocDownLoadVo;
 import com.example.blogapi.vo.Result;
 import com.example.blogapi.vo.params.DocUploadParam;
 import com.example.blogapi.vo.params.PageParams;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -18,6 +20,7 @@ import java.net.URLEncoder;
 
 @Controller
 @RequestMapping("/document")
+@Slf4j
 public class DocumentController {
     @Autowired
     private DocumentService documentService;
@@ -73,6 +76,13 @@ public class DocumentController {
         sysUser.setId(id);
         UserThreadLocal.put(sysUser);
         return documentService.deleteDocument(documentId);
+    }
+
+    @PostMapping("/search")
+    @ResponseBody
+    public Result searchDocument(@RequestBody PageParams params){
+        log.info("searchDocument request params:[{}] ", JSON.toJSONString(params));
+        return  documentService.searchDocument(params);
     }
 
 }

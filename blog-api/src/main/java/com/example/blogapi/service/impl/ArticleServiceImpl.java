@@ -6,10 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.blogapi.dao.mapper.ArticleMapper;
 import com.example.blogapi.dao.mapper.ArticleTagMapper;
 import com.example.blogapi.dao.mapper.CategoryMapper;
-import com.example.blogapi.dao.pojo.Article;
-import com.example.blogapi.dao.pojo.ArticleBody;
-import com.example.blogapi.dao.pojo.ArticleTag;
-import com.example.blogapi.dao.pojo.SysUser;
+import com.example.blogapi.dao.pojo.*;
 import com.example.blogapi.dos.Archives;
 import com.example.blogapi.dao.mapper.ArticleBodyMapper;
 import com.example.blogapi.service.*;
@@ -17,16 +14,25 @@ import com.example.blogapi.utils.UserThreadLocal;
 import com.example.blogapi.vo.*;
 import com.example.blogapi.vo.params.ArticleParam;
 import com.example.blogapi.vo.params.PageParams;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.joda.time.DateTime;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.ParameterResolutionDelegate;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
+import org.springframework.data.elasticsearch.core.SearchHit;
+import org.springframework.data.elasticsearch.core.SearchHits;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQuery;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class ArticleServiceImpl implements ArticleService {
@@ -43,6 +49,8 @@ public class ArticleServiceImpl implements ArticleService {
     @Autowired
     private ArticleTagMapper articleTagMapper;
 
+    @Resource
+    private ElasticsearchRestTemplate elasticsearchTemplate;
 
     @Override
     public Result listArticle(PageParams pageParams) {
@@ -79,6 +87,17 @@ public class ArticleServiceImpl implements ArticleService {
         List<Archives> archives=articleMapper.listArchives();
         return Result.success(archives);
     }
+
+    @Override
+    public Result searchArticle(PageParams params) {
+        NativeSearchQuery query = new NativeSearchQueryBuilder().
+                withQuery(QueryBuilders.matchQuery("all", params.getSearchKey()))
+                .withPageable(PageRequest.of(params.getPage() - 1, params.getPageSize())).build();
+        SearchHits<Article> searchHits = elasticsearchTemplate.search(query, Article.class);
+        List<Article> articles = searchHits.stream().map(SearchHit::getContent).collect(Collectors.toList());
+        return Result.success(articles);
+    }
+
     //根据id查找文章的内容
     @Autowired
     private ThreadService threadService;
