@@ -36,18 +36,10 @@ public class DocumentController {
     @PostMapping("/upload")
     @ResponseBody
     public Result upload(DocUploadParam uploadParam){
-        Long id = Long.parseLong("1404448463944462338");
-        SysUser sysUser = new SysUser();
-        sysUser.setId(id);
-        UserThreadLocal.put(sysUser);
         return documentService.uploadDocument(uploadParam);
     }
     @GetMapping ("/download/{id}")
     public  ResponseEntity<byte[]> download(@PathVariable("id") Long documentId) throws IOException {
-        Long id = Long.parseLong("1404448463944462338");
-        SysUser sysUser = new SysUser();
-        sysUser.setId(id);
-        UserThreadLocal.put(sysUser);
         Result result = documentService.downloadDocument(documentId);
         DocDownLoadVo data = (DocDownLoadVo) result.getData();
         HttpHeaders headers = new HttpHeaders();
@@ -62,19 +54,11 @@ public class DocumentController {
     @PostMapping("/update")
     @ResponseBody
     public Result update(DocUploadParam uploadParam){
-        Long id = Long.parseLong("1404448463944462338");
-        SysUser sysUser = new SysUser();
-        sysUser.setId(id);
-        UserThreadLocal.put(sysUser);
         return  documentService.updateDocument(uploadParam);
     }
     @PostMapping("/delete")
     @ResponseBody
     public Result delete(@RequestParam("documentId") Long documentId){
-        Long id = Long.parseLong("1404448463944462338");
-        SysUser sysUser = new SysUser();
-        sysUser.setId(id);
-        UserThreadLocal.put(sysUser);
         return documentService.deleteDocument(documentId);
     }
 

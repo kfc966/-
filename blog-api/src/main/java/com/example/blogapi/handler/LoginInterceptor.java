@@ -27,8 +27,6 @@ public class LoginInterceptor implements HandlerInterceptor {
        * 3.如果token不为空，登录验证 loginService checkToken
        * 4.如果成功，放行
        * */
-        // test
-        if( true ) return  true;
         if(! (handler instanceof HandlerMethod))
         {
             //handler 可能是访问静态资源，默认去static目录去查询
