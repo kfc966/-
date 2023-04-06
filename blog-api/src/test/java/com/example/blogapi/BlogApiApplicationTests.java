@@ -17,6 +17,8 @@ import com.example.blogapi.vo.params.PageParams;
 import com.github.tobato.fastdfs.domain.fdfs.StorePath;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -124,5 +126,17 @@ class BlogApiApplicationTests {
 //            System.out.println(article);
 //        }
 
+    }
+
+
+    @Test
+    public void jiexiword() throws IOException {
+        File file = new File("D:\\tmp\\testsearch.docx");
+        XWPFDocument doc = new XWPFDocument(new FileInputStream(file));
+        log.info("doc对象{}",doc.toString());
+        // 使用 XWPFWordExtractor 提取 Word 文档内容
+        XWPFWordExtractor extractor = new XWPFWordExtractor(doc);
+        String text = extractor.getText();
+        System.out.println(text);
     }
 }

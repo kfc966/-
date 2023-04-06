@@ -56,4 +56,8 @@ public class Document {
     @Field(type = FieldType.Text, analyzer = "ik_max_word")
     @TableField(exist = false)
     private String all;
+
+    @Field(type = FieldType.Text,analyzer = "ik_max_word", copyTo = "all")
+    @TableField(exist = false)
+    private String content;
 }

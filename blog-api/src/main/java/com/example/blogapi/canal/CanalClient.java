@@ -11,17 +11,25 @@ import com.alibaba.otter.canal.protocol.Message;
 import com.example.blogapi.dao.pojo.Document;
 import com.example.blogapi.dao.repository.DocumentRepository;
 import com.example.blogapi.service.SysUserService;
+import com.example.blogapi.utils.FastdfsUtils;
 import com.example.blogapi.vo.UserVo;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.EnableRetry;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -41,6 +49,9 @@ public class CanalClient implements ApplicationListener<ContextRefreshedEvent> {
     @Resource
     private SysUserService sysUserService;
 
+    @Resource
+    private FastdfsUtils fastdfsUtils;
+
     private final String IPAddress = "13.212.18.162";
 
     /**
@@ -59,6 +70,7 @@ public class CanalClient implements ApplicationListener<ContextRefreshedEvent> {
             //获取数据
             Message message = connector.get(10);
             List<CanalEntry.Entry> entryList = message.getEntries();
+            log.info("------canal拉取数据------");
             if (CollectionUtils.isEmpty(entryList)) {
                 //没有数据，休息一会
                 TimeUnit.SECONDS.sleep(5);
@@ -127,19 +139,51 @@ public class CanalClient implements ApplicationListener<ContextRefreshedEvent> {
         }
     }
 
-    /**
-     * 根据canal获取的数据创建Music对象
-     *
-     * @param columnList
-     * @return
-     */
-    private Document createDocument(List<CanalEntry.Column> columnList) {
+
+    @Retryable(value = {RuntimeException.class} ,maxAttempts = 2, backoff = @Backoff(delay = 1000))
+    public Document createDocument(List<CanalEntry.Column> columnList){
         JSONObject jsonObject = new JSONObject();
         for (CanalEntry.Column column : columnList) {
             jsonObject.fluentPut(StrUtil.toCamelCase(column.getName()), column.getValue());
         }
         Document document = jsonObject.toJavaObject(Document.class);
+        String extension = FilenameUtils.getExtension(document.getDocTitle());
+        switch (extension) {
+            case "docx":
+                setDocumentContent(document);
+                break;
+            case "doc":
+                setDocumentContent(document);
+                break;
+            case "txt":
+                setDocumentContent(document);
+            default:
+                break;
+        }
         return document;
+    }
+
+    private void setDocumentContent(Document document) {
+
+        try {
+            byte[] bytes = fastdfsUtils.download(document.getDocUri());
+            ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
+            // 将字节数组转换为 XWPFDocument 对象4
+            log.info("下载的bytes-{}",inputStream.toString());
+            XWPFDocument doc = new XWPFDocument(inputStream);
+            log.info("doc对象{}",doc.toString());
+            // 使用 XWPFWordExtractor 提取 Word 文档内容
+            XWPFWordExtractor extractor = new XWPFWordExtractor(doc);
+            String text = extractor.getText();
+            document.setContent(text);
+
+            // 关闭 XWPFDocument 和 XWPFWordExtractor
+            doc.close();
+            extractor.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
 
