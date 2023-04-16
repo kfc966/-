@@ -18,7 +18,6 @@ import java.net.URI;
 public class ElapsedTimeGlobalFilter implements GlobalFilter, Ordered {
 
 
-
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         long startTime = System.currentTimeMillis();
@@ -34,7 +33,8 @@ public class ElapsedTimeGlobalFilter implements GlobalFilter, Ordered {
                     log.info("{} {} {} ({}) ms", exchange.getRequest().getMethod(),
                             exchange.getRequest().getURI().getPath(),
                             exchange.getResponse().getStatusCode(),
-                            duration);})
+                            duration);
+                })
         );
     }
 
