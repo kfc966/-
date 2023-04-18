@@ -1,6 +1,6 @@
 package com.example.blogapi.service.impl;
 
-import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.blogapi.dao.mapper.DocumentMapper;
@@ -18,6 +18,7 @@ import com.example.blogapi.vo.params.PageParams;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
 import org.springframework.data.elasticsearch.core.SearchHit;
@@ -66,6 +67,7 @@ public class DocumentServiceImpl implements DocumentService {
                 for (UserVo userVo : userVoByIds) {
                     if (userVo.getId().equals(String.valueOf(document.getPublisherId()))) {
                         document.setPublisher(userVo.getNickname());
+                        document.setAll(document.getContent());
                         return;
                     }
                 }
@@ -159,8 +161,23 @@ public class DocumentServiceImpl implements DocumentService {
         if(StringUtils.isBlank(params.getSearchKey())){
             queryBuilder.withQuery(QueryBuilders.matchAllQuery());
         }
+        // 对all查询进行高亮
+        queryBuilder.withHighlightFields(new HighlightBuilder.Field("all"));
         SearchHits<Document> searchHits = elasticsearchTemplate.search(queryBuilder.build(), Document.class);
-        List<Document> documents = searchHits.stream().map(SearchHit::getContent).collect(Collectors.toList());
+        List<Document> documents = searchHits.stream().map(s->{
+            Document document = s.getContent();
+            List<String> highlightField = s.getHighlightField("all");
+            if(!CollectionUtils.isEmpty(highlightField)){
+                document.setAll(highlightField.get(0));
+            }
+            if(StringUtils.isBlank(document.getAll())){
+                document.setAll(document.getContent());
+            }
+            if(StringUtils.length(document.getAll())>100){
+                document.setAll(document.getAll().substring(0,100));
+            }
+            return  document;
+        }).collect(Collectors.toList());
         DocListVo docListVo = new DocListVo(documents, params.getPageSize(), params.getPage(), (int) searchHits.getTotalHits());
         return Result.success(docListVo);
     }
