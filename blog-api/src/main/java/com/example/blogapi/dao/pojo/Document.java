@@ -53,6 +53,12 @@ public class Document {
     @Field(type = FieldType.Long)
     private Long updateTime;
 
+    /**
+     * 描述
+     */
+    @Field(type = FieldType.Text,analyzer = "ik_max_word", copyTo = "all")
+    private String docDesc;
+
     @Field(type = FieldType.Text, analyzer = "ik_max_word")
     @TableField(exist = false)
     private String all;
@@ -60,4 +66,5 @@ public class Document {
     @Field(type = FieldType.Text,analyzer = "ik_max_word", copyTo = "all")
     @TableField(exist = false)
     private String content;
+
 }

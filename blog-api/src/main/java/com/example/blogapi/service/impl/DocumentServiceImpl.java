@@ -82,6 +82,7 @@ public class DocumentServiceImpl implements DocumentService {
             String storePath = fastdfsUtils.upload(multipartFile);
             Document doc = Document.builder().docUri(storePath).ownerType(uploadParam.getOwnerType())
                     .publisherId(UserThreadLocal.get().getId())
+                    .docDesc(uploadParam.getDesc())
                     .updateTime(System.currentTimeMillis()).docTitle(multipartFile.getOriginalFilename()).build();
             int insert = documentMapper.insert(doc);
             return Result.success(insert);
@@ -124,6 +125,7 @@ public class DocumentServiceImpl implements DocumentService {
         // 只是单纯修改文件的描述和权限
         Document.DocumentBuilder documentBuilder = Document.builder().id(String.valueOf(uploadParam.getDocId()))
                 .ownerType(uploadParam.getOwnerType())
+                .docDesc(uploadParam.getDesc())
                 .publisherId(UserThreadLocal.get().getId())
                 .updateTime(System.currentTimeMillis()).docTitle(multipartFile.getOriginalFilename());
 

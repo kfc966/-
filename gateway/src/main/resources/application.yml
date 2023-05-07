@@ -9,8 +9,10 @@ spring:
         add-to-simple-url-handler-mapping: true # 解决options请求被拦截问题
         corsConfigurations:
           '[/**]':
-            allowedOrigins: # 允许哪些网站的跨域请求
-              - "http://localhost:8081"
+#            allowedOrigins: # 允许哪些网站的跨域请求
+#              - "http://localhost:8081"
+            allowedOriginPatterns:
+              - "*"
             allowedMethods: # 允许的跨域ajax的请求方式
               - "GET"
               - "POST"

@@ -32,6 +32,7 @@ import javax.annotation.Resource;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -52,7 +53,7 @@ public class CanalClient implements ApplicationListener<ContextRefreshedEvent> {
     @Resource
     private FastdfsUtils fastdfsUtils;
 
-    private final String IPAddress = "13.212.18.162";
+    private final String IPAddress = "35.229.244.93";
 
     /**
      * 实时数据同步程序
@@ -156,7 +157,7 @@ public class CanalClient implements ApplicationListener<ContextRefreshedEvent> {
                 setDocumentContent(document);
                 break;
             case "txt":
-                setDocumentContent(document);
+                setTxtContent(document);
             default:
                 break;
         }
@@ -184,6 +185,17 @@ public class CanalClient implements ApplicationListener<ContextRefreshedEvent> {
             throw new RuntimeException(e);
         }
 
+    }
+
+    //todo 重构成责任链模式
+    private void setTxtContent(Document document) {
+        try {
+            byte[] bytes = fastdfsUtils.download(document.getDocUri());
+            String text = new String(bytes, StandardCharsets.UTF_8);
+            document.setContent(text);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
