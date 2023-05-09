@@ -67,4 +67,10 @@ public class Document {
     @TableField(exist = false)
     private String content;
 
+    /**
+     * 是否有权限可见
+     */
+    @TableField(exist = false)
+    private Boolean viewable;
+
 }

@@ -176,7 +176,7 @@ public class CanalClient implements ApplicationListener<ContextRefreshedEvent> {
             // 使用 XWPFWordExtractor 提取 Word 文档内容
             XWPFWordExtractor extractor = new XWPFWordExtractor(doc);
             String text = extractor.getText();
-            document.setContent(text);
+            document.setContent(text.substring(0,300));
 
             // 关闭 XWPFDocument 和 XWPFWordExtractor
             doc.close();

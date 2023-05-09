@@ -1,8 +1,11 @@
 package com.example.blogapi.service;
 
 import com.example.blogapi.vo.Result;
+import com.example.blogapi.vo.params.ApplyDocParam;
 import com.example.blogapi.vo.params.DocUploadParam;
 import com.example.blogapi.vo.params.PageParams;
+
+import java.util.Map;
 
 public interface DocumentService {
 
@@ -17,4 +20,10 @@ public interface DocumentService {
 
 
     Result searchDocument(PageParams params);
+
+    Result applyDocument(ApplyDocParam applyDocParam);
+
+    Result getApplyInfo();
+
+    Result acceptApply(Map<?,?>data);
 }

@@ -6,13 +6,14 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadPoolExecutor;
 
 @Configuration
 @EnableAsync //开启多线程
 public class ThreadPoolConfig {
 
     @Bean("taskExecutor")
-    public Executor asyncServiceExecutor() {
+    public ThreadPoolTaskExecutor asyncServiceExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         // 设置核心线程数
         executor.setCorePoolSize(5);
@@ -23,7 +24,7 @@ public class ThreadPoolConfig {
         // 设置线程活跃时间（秒）
         executor.setKeepAliveSeconds(60);
         // 设置默认线程名称前缀
-        executor.setThreadNamePrefix("码神之路博客项目");
+        executor.setThreadNamePrefix("博客项目");
         // 等待所有任务结束后再关闭线程池
         executor.setWaitForTasksToCompleteOnShutdown(true);
         //执行初始化

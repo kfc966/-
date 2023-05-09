@@ -91,7 +91,7 @@ public class ArticleServiceImpl implements ArticleService {
     @Override
     public Result searchArticle(PageParams params) {
         NativeSearchQuery query = new NativeSearchQueryBuilder().
-                withQuery(QueryBuilders.matchQuery("all", params.getSearchKey()))
+                withQuery(QueryBuilders.matchQuery("all", params.getSearch().getAll()))
                 .withPageable(PageRequest.of(params.getPage() - 1, params.getPageSize())).build();
         SearchHits<Article> searchHits = elasticsearchTemplate.search(query, Article.class);
         List<Article> articles = searchHits.stream().map(SearchHit::getContent).collect(Collectors.toList());

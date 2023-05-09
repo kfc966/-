@@ -12,12 +12,25 @@ public class PageParams {
 
     private String month;
 
-    private String searchKey;
+    private SearchParams search;
 
     public String getMonth(){
         if (this.month != null && this.month.length() == 1){
             return "0"+this.month;
         }
         return this.month;
+    }
+
+    @Data
+    public static class SearchParams {
+        public Long beginTime;
+
+        public Long endTime;
+
+        public Byte owerType;
+
+        public String publisher;
+
+        public String all;
     }
 }

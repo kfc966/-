@@ -1,6 +1,7 @@
 package com.example.blogapi;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson2.TypeReference;
 import com.example.blogapi.dao.mapper.ArticleMapper;
 import com.example.blogapi.dao.mapper.DocumentMapper;
 import com.example.blogapi.dao.mapper.SysUserMapper;
@@ -202,5 +203,16 @@ class BlogApiApplicationTests {
 
         channel.close();
         inputStream.close();
+    }
+
+    @Test
+    public void test11() {
+        String json = "[\n" +
+                "    11111,\n" +
+                "    2222\n" +
+                "]";
+        List<Long> list = com.alibaba.fastjson2.JSON.parseObject(json, new TypeReference<List<Long>>() {
+        });
+        System.out.println(list.size());
     }
 }

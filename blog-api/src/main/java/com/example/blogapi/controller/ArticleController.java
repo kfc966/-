@@ -57,7 +57,7 @@ public class ArticleController {
     @PostMapping("/search")
     @ResponseBody
     public Result searchArticle(@RequestBody PageParams params){
-        log.info("searchArticle request params:[{}] ", JSON.toJSONString(params));
+        log.info("searchArticle request params:[{}] ", JSON.toJSONString(params.getSearch().getAll()));
         return  articleService.searchArticle(params);
     }
 }
