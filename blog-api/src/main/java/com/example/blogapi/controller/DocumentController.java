@@ -90,7 +90,7 @@ public class DocumentController {
     }
 
     /**
-     * 同意审批
+     * 处理审批
      */
     @PostMapping("/accept")
     @ResponseBody

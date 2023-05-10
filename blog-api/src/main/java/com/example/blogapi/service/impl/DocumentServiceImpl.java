@@ -1,6 +1,5 @@
 package com.example.blogapi.service.impl;
 
-import cn.hutool.core.map.MapUtil;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.TypeReference;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -21,11 +20,13 @@ import com.example.blogapi.vo.UserVo;
 import com.example.blogapi.vo.params.ApplyDocParam;
 import com.example.blogapi.vo.params.DocUploadParam;
 import com.example.blogapi.vo.params.PageParams;
+import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
 import org.springframework.data.elasticsearch.core.SearchHit;
@@ -47,6 +48,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.*;
 import java.util.concurrent.Executor;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 
@@ -62,7 +64,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Resource
     private FastdfsUtils fastdfsUtils;
 
-    @Resource
+    @Autowired
     private StringRedisTemplate redisTemplate;
 
     @Resource
@@ -107,6 +109,14 @@ public class DocumentServiceImpl implements DocumentService {
                 doc.setViewable(Boolean.TRUE);
             }else {
                 doc.setViewable(Boolean.FALSE);
+                DocumentOwer documentOwer = documentOwerMapper.selectById(doc.getId());
+                if(documentOwer!=null){
+                    Set<Long> ownerList = JSON.parseObject(documentOwer.getOwer(), new TypeReference<Set<Long>>() {
+                    });
+                    if(ownerList.contains(sysUser.getId())){
+                        doc.setViewable(Boolean.TRUE);
+                    }
+                }
             }
         });
     }
@@ -134,8 +144,15 @@ public class DocumentServiceImpl implements DocumentService {
         if (document == null) {
             return Result.fail(20001, "Document not found");
         }
+        Predicate<Document> predicate = doc -> {
+            DocumentOwer documentOwer = documentOwerMapper.selectById(doc.getId());
+            Set<Long> ownerList = JSON.parseObject(documentOwer.getOwer(), new TypeReference<Set<Long>>() {
+            });
+            return ownerList.contains(UserThreadLocal.get().getId());
+        };
         if (document.getOwnerType() == 1 &&
-                !document.getPublisherId().equals(UserThreadLocal.get().getId())) {
+                !document.getPublisherId().equals(UserThreadLocal.get().getId())
+            && !predicate.test(document)) {
             return Result.fail(20001, "Document not found");
         }
         byte[] download = null;
@@ -163,7 +180,7 @@ public class DocumentServiceImpl implements DocumentService {
                 .ownerType(uploadParam.getOwnerType())
                 .docDesc(uploadParam.getDesc())
                 .publisherId(UserThreadLocal.get().getId())
-                .updateTime(System.currentTimeMillis()).docTitle(multipartFile.getOriginalFilename());
+                .updateTime(System.currentTimeMillis());
 
         try {
             if (multipartFile != null) {
@@ -261,7 +278,8 @@ public class DocumentServiceImpl implements DocumentService {
         applyDocParam.setPublisherId(document.getPublisherId());
         applyDocParam.setApplyUserId(UserThreadLocal.get().getId());
         applyDocParam.setUpdateTime(System.currentTimeMillis());
-        applyDocParam.setFinished(Boolean.FALSE);
+        applyDocParam.setApplyUserName(UserThreadLocal.get().getAccount());
+        applyDocParam.setFinished((byte) 0);
         redisTemplate.opsForList().rightPush(PUBLISHER_PREFIX + document.getPublisherId(), JSON.toJSONString(applyDocParam));
         return Result.success("提交成功");
     }
@@ -285,34 +303,39 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     public Result acceptApply(Map<?,?>data) {
-        Long docId = (Long)data.get("docId");
-        Long applyUserId = (Long)data.get("applyUserId");
-        DocumentOwer documentOwer = documentOwerMapper.selectById(docId);
-        if(documentOwer == null){
-            DocumentOwer ower = new DocumentOwer();
-            ower.setId(docId);
-            ower.setUpdateTime(System.currentTimeMillis());
-            List<Long> list = Arrays.asList(applyUserId, UserThreadLocal.get().getId());
-            ower.setOwer(JSON.toJSONString(list));
-            documentOwerMapper.insert(ower);
-        }
-        else {
-            String ower = documentOwer.getOwer();
-            List<Long> owerList = JSON.parseObject(ower, new TypeReference<List<Long>>() {
-            });
-            owerList.add(applyUserId);
-            documentOwer.setOwer(JSON.toJSONString(owerList));
-            documentOwer.setUpdateTime(System.currentTimeMillis());
-            documentOwerMapper.updateById(documentOwer);
+        Long docId = Long.valueOf(data.get("docId")+"");
+        Long applyUserId = Long.valueOf(data.get("applyUserId")+"");
+        Byte finished = Byte.valueOf(data.get("finished")+"");
+        // 1同意，2拒绝
+        if(finished == 1){
+            DocumentOwer documentOwer = documentOwerMapper.selectById(docId);
+            if(documentOwer == null){
+                DocumentOwer ower = new DocumentOwer();
+                ower.setId(docId);
+                ower.setUpdateTime(System.currentTimeMillis());
+                Set<Long> list = Sets.newHashSet(applyUserId,UserThreadLocal.get().getId());
+                ower.setOwer(JSON.toJSONString(list));
+                documentOwerMapper.insert(ower);
+            }
+            else {
+                String ower = documentOwer.getOwer();
+                Set<Long> ownerList = JSON.parseObject(ower, new TypeReference<Set<Long>>() {
+                });
+                ownerList.add(applyUserId);
+                documentOwer.setOwer(JSON.toJSONString(ownerList));
+                documentOwer.setUpdateTime(System.currentTimeMillis());
+                documentOwerMapper.updateById(documentOwer);
+            }
         }
         // 更新redis
         String key = PUBLISHER_PREFIX + UserThreadLocal.get().getId();
         threadPoolExecutor.execute(()->{
             List<String> list = redisTemplate.opsForList().range(key, 0, -1);
+            log.info("redislist:" + JSON.toJSONString(list));
             for (int i=0;i<list.size();i++) {
                 ApplyDocParam applyDocParam = JSON.parseObject(list.get(i), ApplyDocParam.class);
                 if (docId.equals(applyDocParam.getDocId()) && applyUserId.equals(applyDocParam.getApplyUserId())) {
-                    applyDocParam.setFinished(Boolean.TRUE);
+                    applyDocParam.setFinished(finished);
                     applyDocParam.setUpdateTime(System.currentTimeMillis());
                     redisTemplate.opsForList().set(key, i, JSON.toJSONString(applyDocParam));
                     break;
